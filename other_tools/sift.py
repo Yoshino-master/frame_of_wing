@@ -7,6 +7,7 @@ from PIL import Image
 from matplotlib import pylab
 import os, cv2
 import numpy as np
+from scipy.cluster.vq import *
 
 def process_image(imagename, resultname, midpath='', params='--edge-thresh 10 --peak-thresh 5'):
     if(imagename[-3:] != 'pgm'):
@@ -21,6 +22,8 @@ def process_image(imagename, resultname, midpath='', params='--edge-thresh 10 --
 def read_features_from_file(filename):
 #提取计算的sift算子结果
     f = np.loadtxt(filename)
+    if(len(f.shape) == 1):
+        f = f.reshape(1,*f.shape)
     return f[:,:4], f[:,4:]
 
 def write_features_to_file(filename, locs, desc):
@@ -68,6 +71,43 @@ def match_twosided(desc1, desc2, dist_ratio=0.6):
             matches_12[n] = 0
     return matches_12.squeeze()
 
+class Vocabulary(object):
+#对给定的图像兴趣点的特征进行聚类,得到视觉词袋模型
+    def __init__(self, name):
+        self.name = name
+        self.voc, self.idf, self.trainingdata = [], [], []
+        self.nbr_words = 0
+    def train(self, featurefiles, k=100, subsampling=1):
+    #对给定文件下下的所有数据文件进行训练
+    #imwords为训练后得到的词频表,x轴为图片索引,y轴为视觉单词索引
+    #idf为逆文档频率
+        nbr_images = len(featurefiles)
+        #从文件中读取特征
+        descr = []
+        descr.append(read_features_from_file(featurefiles[0])[1])
+        descriptors = descr[0]
+        for i in range(1, nbr_images):
+            descr.append(read_features_from_file(featurefiles[i])[1])
+            descriptors = np.vstack((descriptors, descr[i]))
+        print('finished loading files')
+        #Kmeans聚类(这里最后一个参数为迭代次数)
+        self.voc, self.distortion = kmeans(descriptors[::subsampling, :], k, 1)
+        print('finished clustering')
+        self.nbr_words = self.voc.shape[0]
+        #遍历所有图像,并投影到词汇上
+        self.imwords = np.zeros((nbr_images, self.nbr_words))
+        for i in range(nbr_images):
+            self.imwords[i] = self.project(descr[i])
+        nbr_occurences = np.sum((self.imwords > 0) * 1, axis=0)
+        self.idf = np.log((1.0*nbr_images) / (1.0*nbr_occurences+1))
+        self.trainingdata = featurefiles
+    def project(self, descriptors):
+        imhist = np.zeros((self.nbr_words))
+        words, distance = vq(descriptors, self.voc)     #将各特征点向量归类到距离最近的聚类中心
+        for w in words:
+            imhist[w] += 1
+        return imhist
+    
 
 if __name__ == '__main__':
 #以下为使用sift算法对两张图的特征点进行匹配的示意程序
