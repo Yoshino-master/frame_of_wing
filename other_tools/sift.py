@@ -83,22 +83,21 @@ class Vocabulary(object):
     #idf为逆文档频率
         self.nbr_images = len(featurefiles)
         #从文件中读取特征
-        self.descr = []
-        self.descr.append(read_features_from_file(featurefiles[0])[1])
-        self.descriptors = self.descr[0]
+        descr = []
+        descr.append(read_features_from_file(featurefiles[0])[1])
+        descriptors = descr[0]
         for i in range(1, self.nbr_images):
-            self.descr.append(read_features_from_file(featurefiles[i])[1])
-            self.descriptors = np.vstack((self.descriptors, self.descr[i]))
-        self.descriptors = self.descriptors
+            descr.append(read_features_from_file(featurefiles[i])[1])
+            descriptors = np.vstack((descriptors, descr[i]))
         print('finished loading files')
         #Kmeans聚类(这里最后一个参数为迭代次数)
-        self.voc, self.distortion = kmeans(self.descriptors[::subsampling, :], k, 1)
+        self.voc, self.distortion = kmeans(descriptors[::subsampling, :], k, 1)
         print('finished clustering')
         self.nbr_words = self.voc.shape[0]
         #遍历所有图像,并投影到词汇上
         self.imwords = np.zeros((self.nbr_images, self.nbr_words))
         for i in range(self.nbr_images):
-            self.imwords[i] = self.project(self.descr[i])
+            self.imwords[i] = self.project(descr[i])
         nbr_occurences = np.sum((self.imwords > 0) * 1, axis=0)
         self.idf = np.log((1.0*self.nbr_images) / (1.0*nbr_occurences+1))
         self.trainingdata = featurefiles
