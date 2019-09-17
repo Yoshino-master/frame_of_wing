@@ -37,12 +37,13 @@ def GetVideoFrame(VideoPath=0, MaxF=-1):
 
 def SaveVideo(frames, path, fps=20.0):
 #函数功能:将给定的视频流frame保存到path下,fps为视频帧数
-#注意 : 暂时只能保存格式为Mp4的视频文件
-    fourcc = cv2.VideoWriter_fourcc("I", "4", "2", "0")
+#注意 : 默认为avi格式的视频文件
     ImgSize = frames[0].shape
     iscolor = len(ImgSize) == 3
+    fourcc = cv2.VideoWriter_fourcc('M','J','P','G')
     outVideo = cv2.VideoWriter(path, fourcc, fps, (ImgSize[1],ImgSize[0]), iscolor)
     for frame in frames:
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         outVideo.write(frame)
     outVideo.release()
 

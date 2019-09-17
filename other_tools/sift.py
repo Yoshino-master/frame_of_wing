@@ -30,7 +30,7 @@ def write_features_to_file(filename, locs, desc):
 #保存sift文件
     np.savetxt(filename, np.hstack((locs, desc)))
     
-def plot_features(img, locs, circle=False):
+def plot_features(img, locs, circle=True):
 #绘制带有特征点的图像
     def draw_circle(c,r):
         t = np.arange(0,1.01,0.01) * 2 * np.pi
@@ -44,7 +44,15 @@ def plot_features(img, locs, circle=False):
     else:
         pylab.plot(locs[:,0], locs[:,1],'ob')
     pylab.axis('off')
-    
+
+def plot_features_arrow(img, locs, length=20):
+    pylab.imshow(img)
+    x, y = locs[:,0].astype('int'), locs[:,1].astype('int')
+    dx, dy = length*np.cos(locs[:,-1]), length*np.sin(locs[:,-1])
+    for i in range(x.shape[0]):
+        pylab.arrow(x[i],y[i],dx[i],dy[i], width=1, color='c', head_width=4)
+    pylab.axis('off')
+
 def match_desc(desc1, desc2, dist_ratio=0.6):
 #对于第一幅图像中的每个描述子,选取其在第二幅图像中的匹配
     desc1 = np.array([d/np.linalg.norm(d) for d in desc1])
@@ -125,22 +133,30 @@ class Vocabulary(object):
 
 if __name__ == '__main__':
 #以下为使用sift算法对两张图的特征点进行匹配的示意程序
-    from frame_of_wing.other_tools.harris import plot_matches
-    imgname1 = r'E:\workspace\scan_region_path_explore\model_v1\match1.jpg'
-    imgname2 = r'E:\workspace\scan_region_path_explore\model_v1\match2.jpg'
-    midpath = r'E:\workspace\scan_region_path_explore\model_v1'
-    resultname1 = r'E:\workspace\scan_region_path_explore\model_v1\res1.sift'
-    resultname2 = r'E:\workspace\scan_region_path_explore\model_v1\res2.sift'
-    img1 = np.array(Image.open(imgname1).convert('L'))
-    img2 = np.array(Image.open(imgname2).convert('L'))
-#     process_image(imgname1, resultname1, midpath)
-#     process_image(imgname2, resultname2, midpath)
-    l1, d1 = read_features_from_file(resultname1)
-    l2, d2 = read_features_from_file(resultname2)
-    print(l1.shape)
-    print(d1.shape)
-#     matches = match_twosided(d1, d2)
-#     plot_matches(img1, img2, l1, l2, matches)
-
+#     from frame_of_wing.other_tools.harris import plot_matches
+#     imgname1 = r'E:\workspace\scan_region_path_explore\model_v1\match1.jpg'
+#     imgname2 = r'E:\workspace\scan_region_path_explore\model_v1\match2.jpg'
+#     midpath = r'E:\workspace\scan_region_path_explore\model_v1'
+#     resultname1 = r'E:\workspace\scan_region_path_explore\model_v1\res1.sift'
+#     resultname2 = r'E:\workspace\scan_region_path_explore\model_v1\res2.sift'
+#     img1 = np.array(Image.open(imgname1).convert('L'))
+#     img2 = np.array(Image.open(imgname2).convert('L'))
+# #     process_image(imgname1, resultname1, midpath)
+# #     process_image(imgname2, resultname2, midpath)
+#     l1, d1 = read_features_from_file(resultname1)
+#     l2, d2 = read_features_from_file(resultname2)
+#     print(l1.shape)
+#     print(d1.shape)
+# #     matches = match_twosided(d1, d2)
+# #     plot_matches(img1, img2, l1, l2, matches)
+    
+    imgname = r'F:\data\saliency\ours\source\COCO_test2015_000000350796.jpg'
+    resultname = r'F:\data\saliency\task_files\sift\COCO_test2015_000000350796.sift'
+    img = np.array(Image.open(imgname))
+    l, d = read_features_from_file(resultname)
+    plot_features(img, l)
+#     pylab.arrow(100,100,100,100, width=1,color='c',head_width=5)
+    pylab.show()
+    
 
 
